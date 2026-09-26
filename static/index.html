@@ -1,0 +1,1017 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Repositorio Virtual de Papers</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #222;
+        }
+
+        header {
+            background-color: #263238;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin-bottom: 0;
+            color: #cfd8dc;
+        }
+
+        main {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        section {
+            background-color: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #37474f;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .campo-completo {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 3px;
+        }
+
+        .btn-crear {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .btn-editar {
+            background-color: #1565c0;
+            color: white;
+        }
+
+        .btn-eliminar {
+            background-color: #c62828;
+            color: white;
+        }
+
+        .btn-revision {
+            background-color: #6a1b9a;
+            color: white;
+        }
+
+        .btn-cancelar {
+            background-color: #757575;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .acciones {
+            margin-top: 15px;
+        }
+
+        #mensaje {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .mensaje-exito {
+            background-color: #dff0d8;
+            color: #2e7d32;
+        }
+
+        .mensaje-error {
+            background-color: #ffdddd;
+            color: #c62828;
+        }
+
+        .tabla-contenedor {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #37474f;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .sin-datos {
+            text-align: center;
+            color: #777;
+            padding: 25px;
+        }
+
+        #resultadoRevision {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f3e5f5;
+            border-left: 5px solid #6a1b9a;
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            .campo-completo {
+                grid-column: auto;
+            }
+
+            main {
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Repositorio Virtual de Papers Científicos</h1>
+    <p>Gestión de papers mediante FastAPI y MongoDB</p>
+</header>
+
+<main>
+
+    <div id="mensaje"></div>
+
+    <!-- FORMULARIO -->
+    <section>
+        <h2 id="tituloFormulario">Agregar nuevo paper</h2>
+
+        <form id="paperForm">
+
+            <div class="campo campo-completo">
+                <label for="titulo">Título</label>
+                <input
+                    type="text"
+                    id="titulo"
+                    required
+                    placeholder="Título del paper"
+                >
+            </div>
+
+            <div class="campo">
+                <label for="autor">Autor</label>
+                <input
+                    type="text"
+                    id="autor"
+                    required
+                    placeholder="Nombre del autor"
+                >
+            </div>
+
+            <div class="campo">
+                <label for="area_estudio">Área de estudio</label>
+                <input
+                    type="text"
+                    id="area_estudio"
+                    required
+                    placeholder="Ej. Inteligencia Artificial"
+                >
+            </div>
+
+            <div class="campo">
+                <label for="fecha">Fecha</label>
+                <input
+                    type="date"
+                    id="fecha"
+                    required
+                >
+            </div>
+
+            <div class="campo">
+                <label for="numero_paginas">Número de páginas</label>
+                <input
+                    type="number"
+                    id="numero_paginas"
+                    min="1"
+                    required
+                    placeholder="Ej. 15"
+                >
+            </div>
+
+            <div class="campo-completo acciones">
+
+                <button
+                    type="submit"
+                    class="btn-crear"
+                    id="btnGuardar"
+                >
+                    Crear Paper
+                </button>
+
+                <button
+                    type="button"
+                    class="btn-cancelar"
+                    id="btnCancelar"
+                    onclick="cancelarEdicion()"
+                    style="display:none;"
+                >
+                    Cancelar edición
+                </button>
+
+            </div>
+
+        </form>
+    </section>
+
+
+    <!-- LISTADO -->
+    <section>
+
+        <h2>Papers registrados</h2>
+
+        <button
+            type="button"
+            class="btn-editar"
+            onclick="cargarPapers()"
+        >
+            Actualizar lista
+        </button>
+
+        <div class="tabla-contenedor">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Área</th>
+                        <th>Fecha</th>
+                        <th>Páginas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tablaPapers">
+                    <tr>
+                        <td colspan="6" class="sin-datos">
+                            Cargando papers...
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- CONSULTAR POR ID -->
+    <section>
+
+        <h2>Consultar paper por ID</h2>
+
+        <form id="buscarForm">
+
+            <div class="campo">
+                <label for="buscarId">ID del paper</label>
+
+                <input
+                    type="text"
+                    id="buscarId"
+                    placeholder="ObjectId de MongoDB"
+                    required
+                >
+            </div>
+
+            <div class="campo">
+                <label>&nbsp;</label>
+
+                <button
+                    type="submit"
+                    class="btn-editar"
+                >
+                    Consultar
+                </button>
+            </div>
+
+        </form>
+
+        <div id="resultadoBusqueda"></div>
+
+    </section>
+
+
+    <!-- REVISIÓN -->
+    <section>
+
+        <h2>Revisión de validez</h2>
+
+        <p>
+            Introduce el ID de un paper para ejecutar la revisión.
+        </p>
+
+        <form id="revisionForm">
+
+            <div class="campo">
+                <label for="revisionId">ID del paper</label>
+
+                <input
+                    type="text"
+                    id="revisionId"
+                    required
+                    placeholder="ObjectId"
+                >
+            </div>
+
+            <div class="campo">
+                <label>&nbsp;</label>
+
+                <button
+                    type="submit"
+                    class="btn-revision"
+                >
+                    Ejecutar revisión
+                </button>
+            </div>
+
+        </form>
+
+        <div id="resultadoRevision"></div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+    const API_URL = "";
+
+
+    let paperEditandoId = null;
+
+
+    function mostrarMensaje(texto, tipo = "exito") {
+
+        const mensaje = document.getElementById("mensaje");
+
+        mensaje.textContent = texto;
+
+        mensaje.className =
+            tipo === "error"
+                ? "mensaje-error"
+                : "mensaje-exito";
+
+        mensaje.style.display = "block";
+
+        setTimeout(() => {
+            mensaje.style.display = "none";
+        }, 4000);
+    }
+
+
+    async function cargarPapers() {
+
+        const tabla = document.getElementById("tablaPapers");
+
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="6" class="sin-datos">
+                    Cargando...
+                </td>
+            </tr>
+        `;
+
+        try {
+
+            const respuesta = await fetch(
+                `${API_URL}/estudiantes`
+            );
+
+            if (!respuesta.ok) {
+                throw new Error(
+                    "No se pudieron obtener los papers."
+                );
+            }
+
+            const papers = await respuesta.json();
+
+            tabla.innerHTML = "";
+
+            if (papers.length === 0) {
+
+                tabla.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="sin-datos">
+                            No hay papers registrados.
+                        </td>
+                    </tr>
+                `;
+
+                return;
+            }
+
+
+            papers.forEach(paper => {
+
+                const fila = document.createElement("tr");
+
+                fila.innerHTML = `
+
+                    <td>${escaparHTML(paper.titulo)}</td>
+
+                    <td>${escaparHTML(paper.autor)}</td>
+
+                    <td>${escaparHTML(paper.area_estudio)}</td>
+
+                    <td>${escaparHTML(paper.fecha)}</td>
+
+                    <td>${paper.numero_paginas}</td>
+
+                    <td>
+
+                        <button
+                            class="btn-editar"
+                            onclick="editarPaper('${paper._id}')"
+                        >
+                            Editar
+                        </button>
+
+                        <button
+                            class="btn-eliminar"
+                            onclick="eliminarPaper('${paper._id}')"
+                        >
+                            Eliminar
+                        </button>
+
+                        <button
+                            class="btn-revision"
+                            onclick="revisarPaper('${paper._id}')"
+                        >
+                            Revisar
+                        </button>
+
+                    </td>
+                `;
+
+                tabla.appendChild(fila);
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            tabla.innerHTML = `
+                <tr>
+                    <td colspan="6" class="sin-datos">
+                        Error al cargar los papers.
+                    </td>
+                </tr>
+            `;
+
+            mostrarMensaje(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    // ============================================================
+    // CREAR / ACTUALIZAR
+    // ============================================================
+
+    document
+        .getElementById("paperForm")
+        .addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const paper = {
+
+                titulo:
+                    document.getElementById("titulo").value,
+
+                autor:
+                    document.getElementById("autor").value,
+
+                area_estudio:
+                    document.getElementById("area_estudio").value,
+
+                fecha:
+                    document.getElementById("fecha").value,
+
+                numero_paginas:
+                    Number(
+                        document.getElementById(
+                            "numero_paginas"
+                        ).value
+                    )
+            };
+
+
+            try {
+
+                let respuesta;
+
+                // ------------------------------------------------
+                // ACTUALIZAR
+                // ------------------------------------------------
+
+                if (paperEditandoId) {
+
+                    respuesta = await fetch(
+                        `${API_URL}/estudiantes/${paperEditandoId}`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify(paper)
+                        }
+                    );
+
+                }
+
+                // ------------------------------------------------
+                // CREAR
+                // ------------------------------------------------
+
+                else {
+
+                    respuesta = await fetch(
+                        `${API_URL}/papers`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify(paper)
+                        }
+                    );
+                }
+
+
+                const datos = await respuesta.json();
+
+
+                if (!respuesta.ok) {
+
+                    throw new Error(
+                        datos.detail ||
+                        "Ocurrió un error."
+                    );
+                }
+
+
+                if (paperEditandoId) {
+
+                    mostrarMensaje(
+                        "Paper actualizado correctamente."
+                    );
+
+                } else {
+
+                    mostrarMensaje(
+                        "Paper creado correctamente."
+                    );
+                }
+
+
+                cancelarEdicion();
+
+                cargarPapers();
+
+            } catch (error) {
+
+                console.error(error);
+
+                mostrarMensaje(
+                    error.message,
+                    "error"
+                );
+            }
+
+        });
+
+    async function editarPaper(id) {
+
+        try {
+
+            const respuesta = await fetch(
+                `${API_URL}/papers/${id}`
+            );
+
+            const paper = await respuesta.json();
+
+            if (!respuesta.ok) {
+
+                throw new Error(
+                    paper.detail ||
+                    "No se pudo obtener el paper."
+                );
+            }
+
+
+            document.getElementById("titulo").value =
+                paper.titulo;
+
+            document.getElementById("autor").value =
+                paper.autor;
+
+            document.getElementById("area_estudio").value =
+                paper.area_estudio;
+
+            document.getElementById("fecha").value =
+                paper.fecha;
+
+            document.getElementById("numero_paginas").value =
+                paper.numero_paginas;
+
+
+            paperEditandoId = id;
+
+
+            document.getElementById(
+                "tituloFormulario"
+            ).textContent =
+                "Editar paper";
+
+
+            document.getElementById(
+                "btnGuardar"
+            ).textContent =
+                "Guardar cambios";
+
+
+            document.getElementById(
+                "btnCancelar"
+            ).style.display =
+                "inline-block";
+
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        } catch (error) {
+
+            mostrarMensaje(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    function cancelarEdicion() {
+
+        paperEditandoId = null;
+
+        document.getElementById(
+            "paperForm"
+        ).reset();
+
+
+        document.getElementById(
+            "tituloFormulario"
+        ).textContent =
+            "Agregar nuevo paper";
+
+
+        document.getElementById(
+            "btnGuardar"
+        ).textContent =
+            "Crear Paper";
+
+
+        document.getElementById(
+            "btnCancelar"
+        ).style.display =
+            "none";
+    }
+
+    async function eliminarPaper(id) {
+
+        const confirmar = confirm(
+            "¿Estás seguro de que deseas eliminar este paper?"
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+
+        try {
+
+            const respuesta = await fetch(
+                `${API_URL}/papers/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+            if (!respuesta.ok) {
+
+                const datos = await respuesta.json();
+
+                throw new Error(
+                    datos.detail ||
+                    "No se pudo eliminar el paper."
+                );
+            }
+
+
+            mostrarMensaje(
+                "Paper eliminado correctamente."
+            );
+
+            cargarPapers();
+
+        } catch (error) {
+
+            console.error(error);
+
+            mostrarMensaje(
+                error.message,
+                "error"
+            );
+        }
+    }
+
+
+    document
+        .getElementById("buscarForm")
+        .addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const id =
+                document.getElementById("buscarId").value.trim();
+
+            const resultado =
+                document.getElementById("resultadoBusqueda");
+
+
+            resultado.innerHTML =
+                "<p>Consultando...</p>";
+
+
+            try {
+
+                const respuesta = await fetch(
+                    `${API_URL}/papers/${id}`
+                );
+
+                const paper = await respuesta.json();
+
+
+                if (!respuesta.ok) {
+
+                    throw new Error(
+                        paper.detail ||
+                        "Paper no encontrado."
+                    );
+                }
+
+
+                resultado.innerHTML = `
+
+                    <h3>${escaparHTML(paper.titulo)}</h3>
+
+                    <p>
+                        <strong>ID:</strong>
+                        ${escaparHTML(paper._id)}
+                    </p>
+
+                    <p>
+                        <strong>Autor:</strong>
+                        ${escaparHTML(paper.autor)}
+                    </p>
+
+                    <p>
+                        <strong>Área:</strong>
+                        ${escaparHTML(paper.area_estudio)}
+                    </p>
+
+                    <p>
+                        <strong>Fecha:</strong>
+                        ${escaparHTML(paper.fecha)}
+                    </p>
+
+                    <p>
+                        <strong>Páginas:</strong>
+                        ${paper.numero_paginas}
+                    </p>
+
+                `;
+
+            } catch (error) {
+
+                resultado.innerHTML = `
+                    <p style="color:#c62828;">
+                        ${escaparHTML(error.message)}
+                    </p>
+                `;
+            }
+
+        });
+
+    async function revisarPaper(id) {
+
+        await ejecutarRevision(id);
+
+    }
+
+
+    document
+        .getElementById("revisionForm")
+        .addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const id =
+                document
+                    .getElementById("revisionId")
+                    .value
+                    .trim();
+
+            await ejecutarRevision(id);
+
+        });
+
+
+    async function ejecutarRevision(id) {
+
+        const resultado =
+            document.getElementById(
+                "resultadoRevision"
+            );
+
+
+        resultado.style.display = "block";
+
+        resultado.innerHTML =
+            "<p>Ejecutando revisión... Esto puede tardar unos segundos.</p>";
+
+
+        try {
+
+            const respuesta = await fetch(
+                `${API_URL}/papers/${id}/revision-validez`,
+                {
+                    method: "POST"
+                }
+            );
+
+
+            const datos = await respuesta.json();
+
+
+            if (!respuesta.ok) {
+
+                throw new Error(
+                    datos.detail ||
+                    "No se pudo ejecutar la revisión."
+                );
+            }
+
+
+            resultado.innerHTML = `
+
+                <h3>Revisión finalizada</h3>
+
+                <p>
+                    <strong>Paper:</strong>
+                    ${escaparHTML(
+                        datos.estudiante || datos.titulo || "N/A"
+                    )}
+                </p>
+
+                <p>
+                    <strong>Estado:</strong>
+                    ${escaparHTML(
+                        datos.estado || "N/A"
+                    )}
+                </p>
+
+                <p>
+                    <strong>Páginas:</strong>
+                    ${datos.páginas ?? "N/A"}
+                </p>
+
+            `;
+
+        } catch (error) {
+
+            console.error(error);
+
+            resultado.innerHTML = `
+                <p style="color:#c62828;">
+                    ${escaparHTML(error.message)}
+                </p>
+            `;
+        }
+    }
+
+
+    function escaparHTML(texto) {
+
+        const div = document.createElement("div");
+
+        div.textContent = texto ?? "";
+
+        return div.innerHTML;
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+            cargarPapers();
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
+```
