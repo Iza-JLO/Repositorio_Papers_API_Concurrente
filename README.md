@@ -39,6 +39,12 @@ python -m pip install -r requirements.txt ó
 
 python3 -m pip install -r requirements.txt
 ```
+### 5. Levantar el api
+Una vez instalado todo lo necesario, ejecutar:
+```bash
+python -m uvicorn main:app --reload
+```
+Copear la ruta de localhost y pegar en el navegador.
 
 ## Endpoints
 
