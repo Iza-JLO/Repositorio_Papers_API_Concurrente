@@ -11,6 +11,7 @@ import os
 import time
 import asyncio
 from pymongo import ReturnDocument
+import random
 
 load_dotenv()
 
@@ -53,7 +54,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class paper(BaseModel):
+class PaperIn(BaseModel):
     titulo: str
     autor: str
     area_estudio: str
@@ -113,39 +114,39 @@ async def obtener_estudiante(id: str):
 
     return doc
 
-
+#Crear un nuevo paper jeje
 @app.post(
-    "/estudiantes",
-    response_model=EstudianteOut,
+    "/papers",
+    response_model=PaperOut,
     status_code=status.HTTP_201_CREATED
 )
-async def crear_estudiante(e: EstudianteIn):
+async def crear_paper(e: PaperIn):
 
-    correo_existe = await estudiantes.find_one(
-        {"email": e.email}
+    titulo_paper_existe = await papers.find_one(
+        {"titulo": e.titulo}
     )
 
-    if correo_existe:
+    if titulo_paper_existe:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El correo electrónico ya se encuentra registrado."
+            detail="El título del Paper ya existe."
         )
 
-    result = await estudiantes.insert_one(
+    result = await papers.insert_one(
         e.model_dump()
     )
 
-    nuevo = await estudiantes.find_one(
+    nuevo = await papers.find_one(
         {"_id": result.inserted_id}
     )
 
     return nuevo
 
 
-@app.put("/estudiantes/{id}", response_model=EstudianteOut)
+@app.put("/estudiantes/{id}", response_model=PaperOut)
 async def actualizar_estudiante(
     id: str,
-    e: EstudianteIn
+    e: PaperIn
 ):
 
     if not ObjectId.is_valid(id):
@@ -154,7 +155,7 @@ async def actualizar_estudiante(
             detail="ID inválido."
         )
 
-    result = await estudiantes.find_one_and_update(
+    result = await papers.find_one_and_update(
         {"_id": ObjectId(id)},
         {"$set": e.model_dump()},
         return_document=ReturnDocument.AFTER
@@ -163,17 +164,17 @@ async def actualizar_estudiante(
     if not result:
         raise HTTPException(
             status_code=404,
-            detail="Estudiante no encontrado."
+            detail="Paper no encontrado."
         )
 
     return result
 
 
 @app.delete(
-    "/estudiantes/{id}",
+    "/papers/{id}",
     status_code=status.HTTP_204_NO_CONTENT
 )
-async def eliminar_estudiante(id: str):
+async def eliminar_paper(id: str):
 
     if not ObjectId.is_valid(id):
         raise HTTPException(
@@ -181,31 +182,31 @@ async def eliminar_estudiante(id: str):
             detail="ID inválido."
         )
 
-    result = await estudiantes.delete_one(
+    result = await papers.delete_one(
         {"_id": ObjectId(id)}
     )
 
     if result.deleted_count == 0:
         raise HTTPException(
             status_code=404,
-            detail="Estudiante no encontrado."
+            detail="Paper no encontrado."
         )
 
     return None
 
 
-def generar_reporte_pesado(nombre_estudiante: str):
-    time.sleep(3)
+def revision_validez_paper(nombre_paper: str):
+    time.sleep(5)
 
     return {
-        "estudiante": nombre_estudiante,
-        "estado": "Reporte generado",
-        "páginas": 10
+        "estudiante": nombre_paper,
+        "estado": "Revisión Finalizada",
+        "páginas": random.random.randint(1,20)
     }
 
 
-@app.post("/estudiantes/{id}/generar-reporte")
-async def generar_reporte(id: str):
+@app.post("/papers{id}/revision-validez")
+async def revision_validez_paper(id: str):
 
     if not ObjectId.is_valid(id):
         raise HTTPException(
@@ -213,19 +214,19 @@ async def generar_reporte(id: str):
             detail="ID inválido."
         )
 
-    estudiante = await estudiantes.find_one(
+    paper = await papers.find_one(
         {"_id": ObjectId(id)}
     )
 
-    if not estudiante:
+    if not paper:
         raise HTTPException(
             status_code=404,
-            detail="Estudiante no encontrado."
+            detail="Paper no encontrado."
         )
 
-    reporte = await asyncio.to_thread(
-        generar_reporte_pesado,
-        estudiante["nombre"]
+    revision = await asyncio.to_thread(
+        revision_validez_paper,
+        paper["nombre"]
     )
 
-    return reporte
+    return revision
