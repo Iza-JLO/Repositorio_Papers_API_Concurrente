@@ -1,5 +1,5 @@
 # Repositorio_Papers_API_Concurrente
-
+Este es un sistema que simula un repositorio virtual de papers académicos donde el usuario puede consultar, crear, actualizar y eliminar papers. Incluye una simulación donde el paper es sometido a revisión (solo simula con time.sleep).
 
 ## Configuración del Entorno Local
 
