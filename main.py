@@ -13,6 +13,12 @@ import asyncio
 from pymongo import ReturnDocument
 import random
 
+
+"""
+Me tardé como 2 horas persiguiendo un error de ip de MONGO :,cccc
+"""
+
+
 load_dotenv()
 
 MONGODB_URI = os.getenv("MONGODB_URI")
@@ -28,17 +34,31 @@ db = None
 papers = None
 
 
+def get_mongo_client():
+    return AsyncIOMotorClient(
+        MONGODB_URI,
+        connect=False,
+        tls=True,
+        tlsAllowInvalidCertificates=True,
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000,
+        socketTimeoutMS=5000,
+        retryWrites=True,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global client, db, papers
 
-    client = AsyncIOMotorClient(MONGODB_URI)
+    client = get_mongo_client()
     db = client[DB_NAME]
     papers = db[COLL_PAPERS]
 
     yield
 
-    client.close()
+    if client is not None:
+        client.close()
 
 
 app = FastAPI(
@@ -87,14 +107,35 @@ async def leer_index():
     return FileResponse("static/index.html")
 
 @app.get("/estudiantes", response_model=list[PaperOut])
+async def listar_papers_legacy():
+    return await listar_papers()
+
+
+@app.get("/papers", response_model=list[PaperOut])
 async def listar_papers():
-    return await papers.find({}).to_list(length=50)
+    if papers is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La base de datos no está disponible."
+        )
+    try:
+        return await papers.find({}).to_list(length=50)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar a MongoDB Atlas. Verifica la URI, credenciales o acceso de red."
+        ) from exc
 
 
 
 #Método GET para obgener un paper con su id
+@app.get("/estudiantes/{id}", response_model=PaperOut)
+async def obtener_paper_legacy(id: str):
+    return await obtener_paper(id)
+
+
 @app.get("/papers/{id}", response_model=PaperOut)
-async def obtener_estudiante(id: str):
+async def obtener_paper(id: str):
 
     if not ObjectId.is_valid(id):
         raise HTTPException(
@@ -102,9 +143,15 @@ async def obtener_estudiante(id: str):
             detail="ID inválido."
         )
 
-    doc = await papers.find_one(
-        {"_id": ObjectId(id)}
-    )
+    try:
+        doc = await papers.find_one(
+            {"_id": ObjectId(id)}
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar a MongoDB Atlas. Verifica la URI, credenciales o acceso de red."
+        ) from exc
 
     if not doc:
         raise HTTPException(
@@ -122,9 +169,15 @@ async def obtener_estudiante(id: str):
 )
 async def crear_paper(e: PaperIn):
 
-    titulo_paper_existe = await papers.find_one(
-        {"titulo": e.titulo}
-    )
+    try:
+        titulo_paper_existe = await papers.find_one(
+            {"titulo": e.titulo}
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar a MongoDB Atlas. Verifica la URI, credenciales o acceso de red."
+        ) from exc
 
     if titulo_paper_existe:
         raise HTTPException(
@@ -132,19 +185,33 @@ async def crear_paper(e: PaperIn):
             detail="El título del Paper ya existe."
         )
 
-    result = await papers.insert_one(
-        e.model_dump()
-    )
+    try:
+        result = await papers.insert_one(
+            e.model_dump()
+        )
 
-    nuevo = await papers.find_one(
-        {"_id": result.inserted_id}
-    )
+        nuevo = await papers.find_one(
+            {"_id": result.inserted_id}
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar a MongoDB Atlas. Verifica la URI, credenciales o acceso de red."
+        ) from exc
 
     return nuevo
 
 
 @app.put("/estudiantes/{id}", response_model=PaperOut)
-async def actualizar_estudiante(
+async def actualizar_paper_legacy(
+    id: str,
+    e: PaperIn
+):
+    return await actualizar_paper(id, e)
+
+
+@app.put("/papers/{id}", response_model=PaperOut)
+async def actualizar_paper(
     id: str,
     e: PaperIn
 ):
@@ -155,11 +222,17 @@ async def actualizar_estudiante(
             detail="ID inválido."
         )
 
-    result = await papers.find_one_and_update(
-        {"_id": ObjectId(id)},
-        {"$set": e.model_dump()},
-        return_document=ReturnDocument.AFTER
-    )
+    try:
+        result = await papers.find_one_and_update(
+            {"_id": ObjectId(id)},
+            {"$set": e.model_dump()},
+            return_document=ReturnDocument.AFTER
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar a MongoDB Atlas. Verifica la URI, credenciales o acceso de red."
+        ) from exc
 
     if not result:
         raise HTTPException(
@@ -182,9 +255,15 @@ async def eliminar_paper(id: str):
             detail="ID inválido."
         )
 
-    result = await papers.delete_one(
-        {"_id": ObjectId(id)}
-    )
+    try:
+        result = await papers.delete_one(
+            {"_id": ObjectId(id)}
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar a MongoDB Atlas. Verifica la URI, credenciales o acceso de red."
+        ) from exc
 
     if result.deleted_count == 0:
         raise HTTPException(
@@ -195,18 +274,18 @@ async def eliminar_paper(id: str):
     return None
 
 
-def revision_validez_paper(nombre_paper: str):
+def validar_revision_paper(nombre_paper: str):
     time.sleep(5)
 
     return {
-        "estudiante": nombre_paper,
+        "paper": nombre_paper,
         "estado": "Revisión Finalizada",
-        "páginas": random.random.randint(1,20)
+        "páginas": random.randint(1, 20)
     }
 
 
-@app.post("/papers{id}/revision-validez")
-async def revision_validez_paper(id: str):
+@app.post("/papers/{id}/revision-validez")
+async def revision_validez_paper_route(id: str):
 
     if not ObjectId.is_valid(id):
         raise HTTPException(
@@ -225,8 +304,8 @@ async def revision_validez_paper(id: str):
         )
 
     revision = await asyncio.to_thread(
-        revision_validez_paper,
-        paper["nombre"]
+        validar_revision_paper,
+        paper["titulo"]
     )
 
     return revision
