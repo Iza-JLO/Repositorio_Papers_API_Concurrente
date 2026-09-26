@@ -39,3 +39,19 @@ python -m pip install -r requirements.txt ó
 
 python3 -m pip install -r requirements.txt
 ```
+
+## Endpoints
+
+* **GET /**: Muestra la interfaz principal del repositorio de papers.
+
+* **GET /papers**: Obtiene y muestra la lista de todos los papers registrados en la base de datos.
+
+* **GET /papers/{id}**: Busca un paper específico utilizando su ID.
+
+* **POST /papers**: Registra un nuevo paper en la base de datos. El título no puede estar repetido.
+
+* **PUT /papers/{id}**: Actualiza la información de un paper existente utilizando su ID.
+
+* **DELETE /papers/{id}**: Elimina un paper de la base de datos utilizando su ID.
+
+* **POST /papers/{id}/revision-validez**: Realiza una revisión de validez simulada del paper. Este endpoint utiliza `asyncio.to_thread()` para ejecutar la tarea bloqueante en un hilo secundario y evitar bloquear el event loop de FastAPI.
