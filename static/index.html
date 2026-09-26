@@ -414,6 +414,15 @@
 
     const API_URL = "";
 
+    // La API está expuesta en el mismo servidor; usamos los endpoints reales de main.py.
+    // Endpoints disponibles:
+    // GET /papers
+    // POST /papers
+    // GET /papers/{id}
+    // PUT /papers/{id}
+    // DELETE /papers/{id}
+    // POST /papers/{id}/revision-validez
+
 
     let paperEditandoId = null;
 
@@ -452,7 +461,7 @@
         try {
 
             const respuesta = await fetch(
-                `${API_URL}/estudiantes`
+                `${API_URL}/papers`
             );
 
             if (!respuesta.ok) {
@@ -589,7 +598,7 @@
                 if (paperEditandoId) {
 
                     respuesta = await fetch(
-                        `${API_URL}/estudiantes/${paperEditandoId}`,
+                        `${API_URL}/papers/${paperEditandoId}`,
                         {
                             method: "PUT",
 
